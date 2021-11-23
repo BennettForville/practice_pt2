@@ -19,5 +19,10 @@ north_america <- subset(gapminder, country=="Canada"|country=="United States"|co
 list(north_america)
 summary(north_america$lifeExp)
 
+#plotting north america lifeExp
 library(ggplot2)
 ggplot(data=north_america, aes(x=year, y=lifeExp, color=country))+geom_point()+geom_line()+ggtitle("North America lifeExp")
+
+#facet attempt
+library(ggplot2)
+ggplot(data=gapminder, aes(x=year, y=lifeExp, color=country))+geom_line() + facet_grid(~country)
