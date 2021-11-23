@@ -1,4 +1,5 @@
 library(gapminder)
+library(ggplot2)
 list(gapminder)
 summary(gapminder)
 
@@ -25,4 +26,10 @@ ggplot(data=north_america, aes(x=year, y=lifeExp, color=country))+geom_point()+g
 
 #facet attempt
 library(ggplot2)
-ggplot(data=gapminder, aes(x=year, y=lifeExp, color=country))+geom_line() + facet_grid(~country)
+ggplot(data=gapminder, aes(x=lifeExp, y=gdpPercap, color=continent))+geom_point()+ scale_y_log10()
+years<- subset(gapminder, year==1987)
+print(years)
+ggplot(data=gapminder, aes(x=lifeExp, y=gdpPercap, color=continent, size=pop))+geom_point()+ scale_y_log10()+facet_wrap(~year)
+china<-subset(gapminder, country=="China")
+print(china)
+ggplot(data=china, aes(x=lifeExp, y=gdpPercap, color=continent, size=pop))+geom_point()+ scale_y_log10()+geom_text(aes(label=year))
