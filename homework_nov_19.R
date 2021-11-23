@@ -1,0 +1,7 @@
+library(gapminder)
+library(ggplot2)
+list(gapminder)
+summary(gapminder)
+summary(gapminder$lifeExp)
+mexico <- subset(gapminder, country=="mexico", select=c("lifeExp"))
+list(mexico)
