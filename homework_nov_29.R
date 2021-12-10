@@ -23,4 +23,5 @@ gapminder %>% count(country)
 gapminder %>% filter(continent=="Europe") %>% group_by(year) %>% summarise(mean_lifeExp=weighted.mean(lifeExp,pop))%>% ggplot(aes(x=year,y=mean_lifeExp,size=mean_lifeExp))+geom_point()+ggtitle("Mean lifeExp for Europe")
 
 # Compute how many separate countries are in the dataset 
+
 length(unique(gapminder$country))
