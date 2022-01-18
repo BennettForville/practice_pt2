@@ -42,3 +42,11 @@ app_births %>% ggplot()+geom_point(aes(year,births,color="red"))+
   labs(x="year",y="number of people", title="total applicants vs births")+
   geom_abline(slope=28571)
 
+ggplot(app_births, aes(births, sum, color=year))+geom_point()+geom_abline()
+
+#reshaping data ex
+app_births %>% pivot_longer(cols = c("births","sum")) %>%
+  ggplot(aes(year, value, color=name))+geom_point()
+
+
+app_births %>% mutate(differences=births-sum)->app_births

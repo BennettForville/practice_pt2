@@ -1,0 +1,96 @@
+---
+title: "B rmarkdown"
+author: "BGF"
+date: "12/20/2021"
+output: 
+  html_document:
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+```
+
+# December 10 hw
+
+```{r create_data, echo=FALSE}
+student_ID <- c("ab", "cd", "ef", "gh", "ij", "kl", "mn", "op")
+students <- tibble(student_ID = student_ID,
+                   name = c("Abigail", "Cassie", "Eva", "Georgia", "Ivan", "Ken", "Max", "Omar"),
+                   grade = c(9, 9, 10, 10, 11, 11, 12, 12),
+                   sex = c("F", "F", "F", "F", "M", "M", "M", "M"),
+                   age = c(14, 15, 15, 15, 16, 17, 17, 18))
+
+course <- c(rep("algebra", 8), rep("biology", 8), rep("physics", 8), rep("art", 8))
+year <- c(rep(2017, 8), rep(2018, 8), rep(2019, 8), rep(2020, 8))
+score <- c(75, 85, 95, 82, 77, 94, 98, 72, 
+           67, 85, 82, 77, 87, 92, 72, 51, 
+           25, 60, 80, 85, 55, 82, 70, 73, 
+           95, 92, 88, 80, 100, 96, 93, 84)
+letter_grade <- c("C", "B", "A", "B-", "C+", "A", "A", "C-",
+                  "D+", "B", "B-", "C+", "B+", "A-", "C-", "F",
+                  "F", "D-", "B-", "B", "F", "B-", "C-", "C",
+                  "A", "A", "B+", "B-", "A", "A", "A", "B")
+
+grades <- as.data.frame(cbind(student_ID, course, year, score, letter_grade))
+grades$score <- as.double(grades$score)
+```
+
+The sample students data set has `r nrow(students)` rows. 
+
+### Average student age by grade
+```{r}
+students %>% # take the data…
+  
+  group_by(grade) %>% # split by grade
+  
+  summarise(mean_age = mean(age)) 
+```
+
+### Number of students in each grade
+```{r}
+students %>% 
+  group_by(grade) %>% 
+  summarise(n())
+```
+
+### Number of students in the entire data set
+```{r}
+nrow(students)
+```
+
+### Number of boys and girls in 9th grade
+```{r}
+students %>% 
+  filter(grade == 9) %>% 
+  group_by(sex) %>% 
+  summarise(n())
+```
+
+### Number of males and females over 17
+```{r}
+students %>% 
+  filter(age>=17) %>% 
+  group_by(sex) %>% 
+  summarise(n())
+```
+
+### Number of A's, B's, C's for all students 
+```{r}
+grades %>% 
+  group_by(letter_grade) %>% 
+  summarise(n())
+```
+
+### Course with the most failing grades
+```{r}
+grades %>% 
+  filter(score<50) %>% 
+  group_by(course) %>% 
+  summarise(n = n()) %>% 
+  slice_max(n)
+```
+
+
+
