@@ -1,0 +1,157 @@
+---
+title: "HW 1/12"
+author: "BGF"
+date: "1/12/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(hector)
+library(dplyr)
+library(ggplot2)
+```
+
+# Bennett hector work 
+
+## task 1
+```{r}
+RCP45 <- system.file("input/hector_rcp45.ini", package = "hector")
+RCP85 <- system.file("input/hector_rcp85.ini", package = "hector")
+
+core45 <- newcore(RCP45)
+core45 
+run(core45) 
+results45 <- fetchvars(core45, 1745:2300)
+results45$Q10 <- "2.0"
+head(results45) 
+
+core85 <- newcore(RCP85)
+core85 
+run(core85) 
+results85 <- fetchvars(core85, 1745:2300)
+results85$Q10 <- "2.0"
+head(results85)
+```
+
+# task 2 run Q10 +10% 
+```{r task 2}
+fetchvars(core45, NA, Q10_RH())
+setvar(core45, NA, Q10_RH(), 2.2, NA) # setting Q10 to 2.2 for core45
+fetchvars(core45, NA, Q10_RH())
+```
+
+## task 3
+```{r}
+reset(core45)
+run(core45) 
+results45high <- fetchvars(core45, 1745:2300)
+results45high$Q10 <- "2.2"
+combined_results45 <- bind_rows(results45, results45high)
+
+ggplot(combined_results45) +
+  aes(x = year, y = value, color = Q10) +
+  geom_line()+
+  facet_wrap(~variable, scales = "free")
+  
+  
+```
+
+## task 4
+```{r}
+# repeating task 2 for 4.5 low
+fetchvars(core45, NA, Q10_RH())
+setvar(core45, NA, Q10_RH(), 1.8, NA) # setting Q10 to 1.8 for core45
+fetchvars(core45, NA, Q10_RH())
+
+# repeating task 3 for 4.5 low
+reset(core45)
+run(core45) 
+results45low <- fetchvars(core45, 1745:2300)
+results45low$Q10 <- "1.8"
+combined_results45low <- bind_rows(results45, results45low)
+
+ggplot(combined_results45low) +
+  aes(x = year, y = value, color = Q10) +
+  geom_line()+
+  facet_wrap(~variable, scales = "free")
+```
+
+## task 5
+```{r}
+
+# repeating task 2 for 8.5 high 
+fetchvars(core85, NA, Q10_RH())
+setvar(core85, NA, Q10_RH(), 2.2, NA) # setting Q10 to 2.2 for core85
+fetchvars(core85, NA, Q10_RH())
+
+# repeating task 3 for 8.5 high 
+reset(core85)
+run(core85) 
+results85high <- fetchvars(core85, 1745:2300)
+results85high$Q10 <- "2.2"
+combined_results85 <- bind_rows(results85, results85high)
+
+ggplot(combined_results85) +
+  aes(x = year, y = value, color = Q10) +
+  geom_line()+
+  facet_wrap(~variable, scales = "free")
+
+# repeating task 4 for 8.5 low
+
+fetchvars(core85, NA, Q10_RH())
+setvar(core85, NA, Q10_RH(), 1.8, NA) # setting Q10 to 1.8 for core85
+fetchvars(core85, NA, Q10_RH())
+reset(core85)
+
+run(core85) 
+results85low <- fetchvars(core85, 1745:2300)
+results85low$Q10 <- "1.8"
+combined_results85low <- bind_rows(results85, results85low)
+
+
+ggplot(combined_results85low) +
+  aes(x = year, y = value, color = Q10) +
+  geom_line()+
+  facet_wrap(~variable, scales = "free")
+
+
+```
+
+## task 6
+```{r}
+complete_combined_results45 <- bind_rows(results45, results45high, results45low)
+complete_combined_results85 <- bind_rows(results85, results85high, results85low)
+complete_combined_results45$scenario <- "4.5"
+complete_combined_results85$scenario <- "8.5"
+```
+ 
+## task 7
+```{r}
+# graphing 4.5 scenarios 
+
+ggplot(complete_combined_results45) +
+  aes(x = year, y = value, color = Q10) +
+  geom_line()+
+  facet_wrap(~variable, scales = "free")
+
+# graphing 8.5 scenarios 
+ggplot(complete_combined_results85) +
+  aes(x = year, y = value, color = Q10) +
+  geom_line()+
+  facet_wrap(~variable, scales = "free")
+
+# all scenarios in one graph
+final_comparison_results <- bind_rows(complete_combined_results45, complete_combined_results85)
+
+ggplot(final_comparison_results) +
+  aes(x = year, y = value, color = Q10) +
+  geom_line()+
+  facet_wrap( variable ~ scenario, scales = "free")
+
+ggplot(final_comparison_results) +
+  aes(x = year, y = value, color = Q10, linetype = scenario) +
+  geom_line()+
+  facet_wrap( ~variable, scales = "free")
+```
+
