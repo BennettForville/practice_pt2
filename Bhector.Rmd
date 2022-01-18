@@ -141,6 +141,8 @@ ggplot(complete_combined_results85) +
   geom_line()+
   facet_wrap(~variable, scales = "free")
 
+
+
 # all scenarios in one graph
 final_comparison_results <- bind_rows(complete_combined_results45, complete_combined_results85)
 
@@ -153,5 +155,23 @@ ggplot(final_comparison_results) +
   aes(x = year, y = value, color = Q10, linetype = scenario) +
   geom_line()+
   facet_wrap( ~variable, scales = "free")
+  
+```
+
+```{r}
+# read in nasa observational data
+# downloaded from https://climate.nasa.gov/vital-signs/global-temperature/
+nasa_temps <- read.csv("nasa_temps.csv")
+names(nasa_temps)<- c("year","Tgav")
+
+# nasa data are normalized to 1951-1980 so we are changing hector data to match
+final_comparison_results %>% 
+  filter(variable == "Tgav", year > 1950, year < 1981)-> Tgav5180 
+final_comparison_results %>% 
+  filter(variable == "Tgav") %>% 
+  mutate(value_norm = value - mean(Tgav5180$value)) %>% 
+  ggplot(aes(year,value_norm, color = Q10, linetype = scenario))+
+  geom_line()+
+  geom_line(data = nasa_temps, aes(year, Tgav), color = "black", linetype = 1)
 ```
 
