@@ -1,0 +1,101 @@
+---
+title: "hwattempt2"
+author: "BGF"
+date: "1/28/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(hector)
+library(dplyr)
+library(ggplot2)
+```
+
+### creating core with ini file
+```{r}
+RCP45 <- system.file("input/hector_rcp45.ini", package = "hector")
+core45 <- newcore(RCP45)
+ini_file <- system.file("input/hector_rcp45.ini", package = "hector") 
+
+our_data <- expand.grid(beta = c(0.3, 0.36, 0.42), q10 = c(1.8, 2, 2.2))
+```
+
+### creating functions 
+```{r}
+# function for beta parameter 
+run_with_param <- function(core, parameter, value) {
+  old_value <- fetchvars(core, NA, parameter)
+  unit <- as.character(old_value[["units"]])
+  setvar(core, NA, parameter, value, unit)
+  reset(core)
+  run(core)
+  result <- fetchvars(core, 2000:2300)
+  result[["parameter_value"]] <- value
+  result
+}
+
+# function for q10 parameter 
+run_with_param2 <- function(core, parameter, value) {
+  old_value <- fetchvars(core, NA, parameter)
+  unit <- as.character(old_value[["units"]])
+  setvar(core, NA, parameter, value, unit)
+  reset(core)
+  run(core)
+  result <- fetchvars(core, 2000:2300)
+  result[["parameter_value"]] <- value
+  result
+}
+```
+
+### creating for loops 
+```{r}
+# for loop that runs the three values of beta 
+results1 <- list()
+for(beta_val in seq(from = 0.3, to = 0.42, by = 0.06)){
+  results1[[as.character(beta_val)]] <- run_with_param(core45, BETA(), beta_val )
+}
+results1 <- bind_rows(results1)
+results1$Parameter <- "beta" ## creating a Parameter collumn to distinguish between beta & q10 
+
+# for loop that runs the three values of q10
+results2 <- list()
+for(q10_val in seq(from = 1.20, to = 2.20, by = 0.20)){
+  results2[[as.character(q10_val)]] <- run_with_param2(core45, Q10_RH(), q10_val )
+}
+results2 <- bind_rows(results2)
+results2$Parameter <- "q10" ## creating a Parameter collumn to distinguish between beta & q10
+
+# Binding results1 & results2
+bothparam_results <- bind_rows(results1,results2)
+
+
+```
+
+### plotting all the data
+```{r}
+# plotting beta
+ggplot(results1) +
+  aes(x = year, y = value, color = parameter_value, group = parameter_value) +
+  geom_line() +
+  facet_wrap(~variable, scales = "free_y") +
+  guides(color = guide_colorbar(title = expression(beta))) +
+  scale_color_continuous()
+
+# plotting q10
+ggplot(results2) +
+  aes(x = year, y = value, color = parameter_value, group = parameter_value) +
+  geom_line() +
+  facet_wrap(~variable, scales = "free_y") +
+  guides(color = guide_colorbar(title = expression(q10)))+
+  scale_color_continuous()
+
+# plotting both beta and q10 on the same graph
+ggplot(bothparam_results) +
+  aes(x = year, y = value, color = parameter_value, group = parameter_value) +
+  geom_line() +
+  facet_wrap(~variable, scales = "free_y") +
+  guides(color = guide_colorbar(title = expression(beta)))+
+  scale_color_continuous()
+```
+

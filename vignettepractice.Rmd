@@ -1,0 +1,45 @@
+---
+title: "Hector r"
+author: "BGF"
+date: "1/21/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(hector)
+library(dplyr)
+library(ggplot2)
+```
+
+```{r}
+run_with_param <- function(core, parameter, value) {
+  # set parameter to requested value
+  old_value <- fetchvars(core, NA, parameter)
+  unit <- as.character(old_value[["units"]])
+  setvar(core, NA, parameter, value, unit)
+  # run the model & get data
+  reset(core)
+  run(core)
+  result <- fetchvars(core, 2000:2300)
+  # record value used
+  result[["parameter_value"]] <- value
+  result
+}
+
+RCP45 <- system.file("input/hector_rcp45.ini", package = "hector")
+core45 <- newcore(RCP45)
+results <- list()
+for(beta_val in seq(from = 0.2, to = 0.5, by = 0.02)){
+  results[[as.character(beta_val)]] <- run_with_param(core45, BETA(), beta_val )
+}
+results <- bind_rows(results)
+
+ggplot(results) +
+  aes(x = year, y = value, color = parameter_value, group = parameter_value) +
+  geom_line() +
+  facet_wrap(~variable, scales = "free_y") +
+  guides(color = guide_colorbar(title = expression(beta))) +
+  scale_color_continuous()
+```
+

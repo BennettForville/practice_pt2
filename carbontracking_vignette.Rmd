@@ -1,0 +1,61 @@
+---
+title: "2/8_vignettepractice"
+author: "BGF"
+date: "2/9/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(hector)
+library(ggplot2)
+```
+
+
+```{r}
+# setting up core 
+inifile <- file.path(system.file('input', package = 'hector'),
+                     'hector_ssp245.ini')
+core <- newcore(inifile)
+fetchvars(core, NA, TRACKING_DATE())
+```
+
+
+```{r}
+# tracking data from 1750
+setvar(core, NA, TRACKING_DATE(), 1750, "(unitless)") 
+fetchvars(core, NA, TRACKING_DATE())
+run(core)
+```
+
+
+```{r}
+# putting data collected into a data table, data starts at year 1750 beacause of setvars call above
+tdata <- get_tracking_data(core)
+head(tdata)
+```
+
+
+```{r}
+ggplot(tdata, aes(year, source_fraction, fill = source_name)) +
+  geom_area() +
+  facet_wrap(~pool_name) +
+  theme(axis.text = element_text(size = 7)) +
+  ggtitle("Source Percentage Change Over Time") +
+  xlab("Year") +
+  ylab("Source Fraction")
+
+```
+
+
+```{r}
+atmos <- subset(tdata, pool_name == "atmos_c")
+ggplot(atmos,
+    aes(year, source_fraction, fill = source_name)) +
+    geom_area() +
+    facet_wrap(~pool_name) +
+    ggtitle("Source Percentage Change Over Time - Atmosphere") +
+    xlab("Year") +
+    ylab("Source Fraction")
+```
+

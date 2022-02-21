@@ -1,0 +1,77 @@
+---
+title: "hectorJan26"
+author: "BGF"
+date: "1/27/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(hector)
+library(dplyr)
+library(ggplot2)
+```
+
+
+```{r}
+RCP45 <- system.file("input/hector_rcp45.ini", package = "hector")
+core45 <- newcore(RCP45)
+ 
+
+```
+
+#uploading our_data 
+```{r}
+our_data <- expand.grid(beta = seq(0.3, 0.5, length.out = 10),
+                        Q10_RH = seq(1.5, 2.5, length.out = 10))
+#our_data <- data.frame(beta = rnorm(100, 0.4, 0.1), 
+                      # Q10_RH = rnorm(100, 2, 0.5))
+```
+
+# creating run with 2params function 
+```{r}
+run_with_2params <- function(core, param1_name, param1_value, param2_name, param2_value){
+  # set parameters to requested values
+  old_value <- fetchvars(core, NA, param1_name)
+  unit <- as.character(old_value[["units"]])
+  setvar(core, NA, param1_name, param1_value, unit)
+  old_value <- fetchvars(core, NA, param2_name)
+  unit <- as.character(old_value[["units"]])
+  setvar(core, NA, param2_name, param2_value, unit)
+  # run the model & get data
+  reset(core)
+  run(core)
+  result <- fetchvars(core, 2000:2300)
+  # record values used
+  result[[param1_name]] <- param1_value
+  result[[param2_name]] <- param2_value
+  result
+}
+```
+
+# creating for loop to run through each row of data set and execute the function
+```{r}
+results <- list() # creating an empty list to store results of the data after going through for loop
+for(rn in 1: nrow(our_data)){
+  message(rn)
+ results[[rn]] <- run_with_2params(core45, BETA(), our_data[rn,1], Q10_RH(), our_data[rn,2] )
+}
+results <- bind_rows(results)# creating the list of data into a readable data set
+```
+
+# graphing beta vs q10 
+```{r}
+ggplot(results %>% filter(variable == "Ca", year == 2100)) +
+  aes(x = beta, y = q10_rh, color = value, z = value)+
+  geom_point()+
+  geom_contour()+
+  facet_wrap(~variable, scales = "free")
+
+ggplot(results %>% filter(variable == "Ca", year == 2100)) +
+  aes(x = beta, y = q10_rh, fill = value, z = value)+
+  geom_tile()+
+  geom_contour(size = 2)+
+  facet_wrap(~variable, scales = "free")
+  
+```
+

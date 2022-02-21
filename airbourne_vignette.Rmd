@@ -1,0 +1,90 @@
+---
+title: "2/10_vignette"
+author: "BGF"
+date: "2/11/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(hector)
+library(ggplot2)
+```
+
+```{r}
+tracking_results <- function(inifile, start, stop, tracking, scenarioName) {
+  # Establish core, turn on tracking, run core
+  core <- newcore(inifile)
+  setvar(core, NA, TRACKING_DATE(), tracking, "(unitless)")
+  
+  reset(core)
+  run(core)
+  
+  # Get results, filter by correct years, add columns containing the amount of carbon by source and the given scenario name
+  results <- get_tracking_data(core)
+  results <- subset(results, year >= start)
+  results <- subset(results, year <= stop)
+  results$source_amount <- results$source_fraction * results$pool_value
+  results$scenario_name <- scenarioName
+  
+  return(results)
+}
+
+AF_calc <- function(start, results, stop) {
+  
+  # Isolate the atmos_c pool and earth_c source in start/end years  
+  atm_c <- subset(results, results$pool_name == "atmos_c")
+  atm_c <- subset(atm_c, atm_c$source_name == "earth_c")
+  
+  atm_c1 <- subset(atm_c, year == start)
+  atm_c2 <- subset(atm_c, year == stop)
+  atm_c <- rbind(atm_c1, atm_c2)
+  
+  # Calculate atmospheric uptake of Earth carbon
+  atm_c <- tail(atm_c$source_amount, n = 1) - head(atm_c$source_amount, n = 1)
+  # Isolate earth_c pool and source in start/end years
+  earth_c_loss <- subset(results, results$pool_name == "earth_c")
+  earth_c_loss <- subset(earth_c_loss, earth_c_loss$source_name == "earth_c")
+  e_c1 <- subset(earth_c_loss, year == start)
+  e_c2 <- subset(earth_c_loss, year == stop)
+  earth_c_loss <- rbind(e_c1, e_c2)
+  
+  # Calculate change in Earth carbon
+  earth_c_loss <- head(earth_c_loss$source_amount, n = 1) - tail(earth_c_loss$source_amount, n = 1)
+  
+  # Airborne fraction calculation
+  AF <- atm_c / earth_c_loss
+  
+  return(AF)
+}
+```
+
+```{r}
+ssp245 <- system.file("input", "hector_ssp245.ini", package = "hector")
+results <- tracking_results(ssp245, 1750, 2050, 1750, "SSP245")
+years <- seq(1950, 2020, by = 10)
+airborne_frac <- cbind(make.row.names = years, lapply(years, AF_calc, results, 1750))
+colnames(airborne_frac) <- c("year", "AF")
+tail(airborne_frac, n = 1)
+```
+
+```{r}
+# Knorr avg - values from Knorr 2009
+knorr_values <- c(0.45, 0.453, 0.518, 0.468, 0.468, 0.514, 0.449)
+knorr_avg <- mean(knorr_values)
+knorr_minmax <- max(knorr_values) - min(knorr_values)
+vars <- c("Knorr avg", years)
+values <- c(knorr_avg, as.numeric(airborne_frac[,2]))
+error <- c(knorr_minmax, rep(0, times = 8))
+df <- data.frame(vars, values, error)
+ggplot(df) +
+  aes(x = vars, y = values, fill = vars) + 
+  geom_bar(stat = "identity") +
+  geom_errorbar(aes(ymin = values - error, ymax = values + error), width = 0.2)+
+  scale_fill_manual(values = c("paleturquoise3", "paleturquoise2", "paleturquoise1", "darkslategray1", "darkslategray2", "darkslategray3", "darkslategray4", "darkslategray", "grey50")) +
+  theme(legend.position = "none") +
+  labs(x = "Year",
+       y = "Airborne fraction over time",
+       title = "Airborne Fraction Composition")
+```
+
